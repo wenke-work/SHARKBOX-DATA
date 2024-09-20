@@ -1,0 +1,6 @@
+type=command
+dependencies=kafka_start
+retries:3
+retry.backoff:6000
+
+command=python  /project_code/sharkbox/data/python/bin/kafka_consumer_controller.py "oms" "oms_to_wms" "kafka_oms_to_wms"

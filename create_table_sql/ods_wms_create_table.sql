@@ -1,0 +1,35 @@
+create table if not exists ods_wms.ods_xizi_db_meio_wms_area(
+     code                string COMMENT '编码'
+    ,name                string COMMENT '名称'
+    ,cate                string COMMENT '存储货位类别'
+    ,id                  string COMMENT '主键'
+    ,enabled             string COMMENT '是否启用'
+    ,creation_date       string COMMENT '创建时间'
+    ,creation_id         string COMMENT '创建者id'
+    ,creation_name       string COMMENT '创建者名称'
+    ,modification_date   string COMMENT '修改时间'
+    ,modification_id     string COMMENT '修改者id'
+    ,modification_name   string COMMENT '修改名称'
+    ,sort_code           string COMMENT '排序号'
+    ,company_code        string COMMENT '公司编码'
+    ,company_id          string COMMENT '公司id'
+    ,company_full_name   string COMMENT '公司全称'
+    ,company_name        string COMMENT '公司简称'
+    ,pinyin              string COMMENT '拼音码'
+    ,pinyin_short        string COMMENT '拼音码首字母简写'
+    ,auditor_id          string COMMENT '审核者id'
+    ,auditor_name        string COMMENT '审核者名称'
+    ,audit_status        string COMMENT '审核状态'
+    ,base_shop_info_id   string COMMENT '店铺id'
+    ,shop_name           string COMMENT '店铺名称'
+    ,workflow_id         string COMMENT '审批流id'
+    ,projectid           string COMMENT 'null'
+    ,projectname         string COMMENT 'null'
+    ,warehouseid         string COMMENT '仓库'
+)
+comment '区域'
+row format delimited fields terminated by ','
+stored as Textfile
+;
+
+

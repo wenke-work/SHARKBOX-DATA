@@ -1,0 +1,6 @@
+type=command
+dependencies=transaction_start
+retries:3
+retry.backoff:6000
+
+command=python /project_code/sharkbox/data/python/bin/sharkbox_transaction.py 60 120

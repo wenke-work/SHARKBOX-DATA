@@ -1,0 +1,3 @@
+type=command
+dependencies=sqoop_export_1,kafka_center_to_oms,kafka_center_to_wms,kafka_oms_to_wms,kafka_error_re_execute
+command=echo 'end'

@@ -1,0 +1,6 @@
+type=command
+dependencies=wms_start
+retries:3
+retry.backoff:6000
+
+command=python /project_code/sharkbox/data/python/bin/pyspark_read_api.py
