@@ -43,6 +43,7 @@ select
 from
     dbo.VatView_AmazonVATSalesData
 where Declare_Serial_Number=@Declare_Serial_Number
+  and Transaction_Type<>'COMMINGLING_BUY'
   and datediff(day,left(@Declare_Date,10),TransacTion_Complete_Date)>=0
   and datediff(day,TransacTion_Complete_Date,right(@Declare_Date,10))>=0
 )
@@ -56,7 +57,6 @@ select
 from
     DataListTmp
 where Tax_Collection_Responsibility='MARKETPLACE'
-  and Transaction_Type<>'COMMINGLING_BUY'
   and Sale_Depart_Country='DE'
 group by Declare_Serial_Number
         ,Declare_Currency
@@ -72,8 +72,7 @@ select
     ,sum(iif(Price_Of_Items_Vat_Rate_Percent=0 and Sale_Depart_Country='DE' and Sale_Arrival_Country='DE',Declare_AMT_VAT_INCL,0))                                                  as SelfGermanyToGermany       --德国到德国(0税率本土销售)
 from
     DataListTmp
-where Transaction_Type<>'COMMINGLING_BUY'
-  and Tax_Collection_Responsibility='SELLER'
+where Tax_Collection_Responsibility='SELLER'
 group by Declare_Serial_Number
 )
 
@@ -88,7 +87,7 @@ where Tax_Collection_Responsibility='SELLER'
   and Sale_Depart_Country='DE'
   and Sale_Arrival_Country<>'DE'
   and Price_Of_Items_Vat_Rate_Percent=0
-  and Buyer_Vat_Number is not null
+  and isnull(Buyer_Vat_Number,'')<>''
 group by Declare_Serial_Number
 )
 
@@ -96,13 +95,10 @@ group by Declare_Serial_Number
 , DeductionAmount as(
 select
      Declare_Serial_Number
-    ,sum(Declare_AMT_VAT_INCL)                                                                                                                                                      as ProcureAmount                 -- 采购金额
+    -- ,sum(Declare_AMT_VAT_INCL)                                                                                                                                                      as ProcureAmount                 -- 采购金额
+    ,0                                                                                                                                                                                 as ProcureAmount                 -- 采购金额
 from
     DataListTmp
-where Tax_Collection_Responsibility='SELLER'
-  and Sale_Depart_Country='DE'
-  and Transaction_Type='COMMINGLING_BUY'
-  and DestinationEuropeanUnion='欧盟成员国'
 group by Declare_Serial_Number
 )
 
@@ -112,9 +108,9 @@ select
     ,tb1.Declare_Currency
     ,'amazon'                                                                                                                                                                         as Platform
     ,'德国'                                                                                                                                                                           as Country
-    ,tb1.WithholdSaleAmount                                                                                                                                                           as WithholdSaleAmount              -- 代扣代缴净销售额
-    ,tb2.SelfGermanyToNotEuropean + tb2.SelfGermanyToEuropean + tb2.SelfEuropeanToGermany                                                                                             as SellerGrossSaleAmount           -- 自缴含税销售额(税率大于0和空白)
-    ,tb2.SelfGermanyToGermany                                                                                                                                                         as SellerNetSaleAmountTaxRate0     -- 自缴净销售额(税率等于0)
+    ,tb1.WithholdSaleAmount + tb2.SelfGermanyToNotEuropean                                                                                                                            as WithholdSaleAmount              -- 代扣代缴净销售额
+    ,floor(tb2.SelfGermanyToEuropean + tb2.SelfEuropeanToGermany)                                                                                                                     as SellerGrossSaleAmount           -- 自缴含税销售额(税率大于0和空白)
+    ,floor(tb2.SelfGermanyToGermany)                                                                                                                                                  as SellerNetSaleAmountTaxRate0     -- 自缴净销售额(税率等于0)
     ,0                                                                                                                                                                                as DomesticB2BNetSaleAmount        -- 本地B2B净销售额
     ,tb3.CrossBorderB2BNetSaleAmount                                                                                                                                                  as CrossBorderB2BNetSaleAmount     -- 跨境B2B净销售额
     ,tb4.ProcureAmount                                                                                                                                                                as ProcureAmount                   -- 采购金额
@@ -157,7 +153,7 @@ then update set tb1.WithholdSaleAmount=isnull(tb2.WithholdSaleAmount,0)
                ,tb1.Interest=isnull(tb2.Interest,0)
                ,tb1.ModifyDate=getdate()
                ,tb1.DE_SelfGermanyToNotEuropean=isnull(tb2.DE_SelfGermanyToNotEuropean,0)
-               ,tb1.DE_SelfGermanyToEuropean=isnull(tb2.DE_SelfGermanyToNotEuropean,0)
+               ,tb1.DE_SelfGermanyToEuropean=isnull(tb2.DE_SelfGermanyToEuropean,0)
 when not matched
 then insert values(tb2.Declare_Serial_Number
                   ,tb2.Declare_Currency
@@ -175,8 +171,13 @@ then insert values(tb2.Declare_Serial_Number
                   ,isnull(tb2.Interest,0)
                   ,getdate()
                   ,getdate()
-                  ,isnull(tb2.DE_SelfGermanyToNotEuropean,0)
-                  ,isnull(tb2.DE_SelfGermanyToEuropean,0)
+                  ,isnull(tb2.DE_SelfGermanyToNotEuropean,0)                               -- 自缴-德国到欧盟外
+                  ,isnull(tb2.DE_SelfGermanyToEuropean,0)                                  -- 自缴-德国到欧盟
+                  ,null                                                                    -- 欧盟B2B采购销售额(如清关递延,不含税金额)
+                  ,null                                                                    -- 欧盟服务发票销售额(如卢森堡发票，不含金额，一般指亚马逊开给b端的发票)
+                  ,null                                                                    -- 税金
+                  ,null                                                                    -- 最终缴纳税金(税金+利息)
+                  ,null                                                                    -- 自缴净销售额(税率大于0和空白)
                   )
 ;
 return 0

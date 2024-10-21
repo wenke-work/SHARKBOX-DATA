@@ -26,7 +26,7 @@ left join
     (select VTADeclareId,isnull(sum(DeductionTax),0) as PVATaxAmount from dbo.AddOtherDeclarationItems2 group by VTADeclareId) tb3              --递延项表
 on tb1.Id=tb3.VTADeclareId
 )
-
+-- 将其它抵抗项,递延写入到计算结果表
 update tb1 set tb1.PVATaxAmount=tb2.PVATaxAmount
           ,tb1.OtherDeductionsTaxAmount=tb2.OtherDeductionsTaxAmount
           ,tb1.ModifyDate=getdate()
@@ -36,6 +36,18 @@ from
 inner join
     DataListTmp tb2
 on tb1.Declare_Serial_Number=tb2.Declare_Serial_Number
+;
+
+-- 将视图中的最终缴纳税金回写到计算结果表
+update tb1 set tb1.TaxAmount=(tb2.FinalTaxAmount - tb2.Interest)
+          ,tb1.FinalTaxAmount=tb2.FinalTaxAmount
+          ,tb1.SellerNetSaleAmountTaxRateGreater0=tb2.SellerNetSaleAmountTaxRateGreater0
+from
+    dbo.Vat_AmazonTaxPaymentCalculation tb1
+inner join
+    dbo.VatView_AmazonTaxPaymentCalculation tb2
+on tb1.Declare_Serial_Number=tb2.Declare_Serial_Number
+where tb1.Declare_Serial_Number=@Declare_Serial_Number
 ;
 end
 go

@@ -47,7 +47,9 @@ def re_execute(kafka_offset,kafka_value,exec_api_program,table_name,retry_count)
     finally:
         # 记录数据库
         kafka_utils_public.update_mysql(global_dict,kafka_offset,table_name,retry_count)
-
+    if global_dict['exec_code'] == 0 or global_dict['exec_code'] == 200:
+        global_dict['exec_rerun'] = True
+        kafka_utils_public.sent_to_wechat(global_dict)
 
 if __name__ == "__main__":
     while True:

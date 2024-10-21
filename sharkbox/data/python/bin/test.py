@@ -5,8 +5,8 @@ from kafka import KafkaProducer
 import sys
 
 
-
-producer = KafkaProducer(bootstrap_servers='134.175.123.184:9092')
+#producer = KafkaProducer(bootstrap_servers='134.175.123.184:9092')
+producer = KafkaProducer(bootstrap_servers='192.168.1.44:1541')
 
 
 value = '{"system":"center","action":"update","table":"warehouse","data":{"ID": "02d3eaa9-22ff-497f-9fff-fefea74438f1", "Code": "W2024059991", "Name": "测试仓库111", "Telphone": "14582698745", "Addrss": "武陵大道", "CreatedDate": "2024-05-28 09:11:44", "CreatedBy": "", "ModifyBy": "超级管理员", "ModifyDate": "2024-05-29 09:23:30", "PersonCharge": "王武", "Type": 1, "Country": "中国", "Province": "湖南省", "City": "常德市", "Area": "武陵区", "ZipCode": "", "Remark": "", "IsValid": "true", "TypeName": "自建仓", "EditType": 0}}'

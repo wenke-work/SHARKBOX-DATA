@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import pyodbc
 import paramiko
-
+from datetime import datetime, timedelta
 def get_sql_server(database):
     if database == 'vat':
         conn_str = (
@@ -23,10 +23,13 @@ def get_ssh():
     return ssh
 
 if __name__ == "__main__":
+    now = datetime.now()
+    one_day_ago = now - timedelta(days=1)
+    str_date = one_day_ago.strftime("%Y-%m-%d")
     sql = '''select distinct t2.F_FilePath from
-                (select SalesDataTableId from testvat_db.dbo.UploadSalesData where SalesPlatformId=3) t1
+                (select SalesDataTableId from vat_db.dbo.UploadSalesData where SalesPlatformId=3 and convert(varchar(100),creationDate,23)='2024-10-11') t1
             left join
-                (select F_FilePath,InfoId from testvat_db.dbo.Base_AnnexesFile where InfoId is not null) t2
+                (select F_FilePath,InfoId from vat_db.dbo.Base_AnnexesFile where InfoId is not null) t2
             on t1.SalesDataTableId=t2.InfoId'''
 
     conn = get_sql_server('vat')

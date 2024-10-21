@@ -159,8 +159,13 @@ then insert values(tb2.Declare_Serial_Number
                   ,isnull(tb2.Interest,0)
                   ,getdate()
                   ,getdate()
-                  ,null
-                  ,null
+                  ,null                                               -- 自缴-德国到欧盟外
+                  ,null                                               -- 自缴-德国到欧盟
+                  ,null                                               -- 欧盟B2B采购销售额(如清关递延,不含税金额)
+                  ,null                                               -- 欧盟服务发票销售额(如卢森堡发票，不含金额，一般指亚马逊开给b端的发票)
+                  ,null                                               -- 税金
+                  ,null                                               -- 最终缴纳税金(税金+利息)
+                  ,null                                               -- 自缴净销售额(税率大于0和空白)
                   )
 ;
 return 0

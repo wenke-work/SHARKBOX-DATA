@@ -73,31 +73,65 @@ drop view if exists VatView_AmazonTaxPaymentCalculation;
 go
 create view VatView_AmazonTaxPaymentCalculation as
 select
-     Declare_Serial_Number                                                                                                                                                                      --业务流水号
-    ,Declare_Currency                                                                                                                                                                           --申报币种
-    ,WithholdSaleAmount                                                                                                                                                                         --代扣代缴净销售额
-    ,SellerGrossSaleAmount + SellerNetSaleAmountTaxRate0                                                                                                as SellerTotalGrossSaleAmount           --自缴含税总销售额
-    ,SellerGrossSaleAmount/(1 + GreaterZeroTaxRate) + SellerNetSaleAmountTaxRate0                                                                       as SellerNetSaleAmount                  --自缴净销售额
-    ,SellerGrossSaleAmount/(1 + GreaterZeroTaxRate) + SellerNetSaleAmountTaxRate0 + WithholdSaleAmount                                                  as TotalNetSaleAmount                   --全部净销售额(自缴净销售额+代扣代缴金额)
-    ,SellerGrossSaleAmount/(1 + GreaterZeroTaxRate) * GreaterZeroTaxRate + PVATaxAmount                                                                 as SalePVATaxAmount                     --销项税
-    ,iif(GreaterZeroTaxRate<>0,(SellerGrossSaleAmount/(1 + GreaterZeroTaxRate) * GreaterZeroTaxRate + PVATaxAmount)/GreaterZeroTaxRate,0)                      as NetSaleAmount                 --销项不含税金额
-    ,iif(GreaterZeroTaxRate<>0,(ProcureAmount/(1 + GreaterZeroTaxRate) * GreaterZeroTaxRate + OtherDeductionsTaxAmount + PVATaxAmount)/GreaterZeroTaxRate,0)   as NetProcureAmount              --进项不含税金额
-    ,ProcureAmount/(1 + GreaterZeroTaxRate) * GreaterZeroTaxRate + OtherDeductionsTaxAmount + PVATaxAmount                                              as ProcurePVATaxAmount                  --进项税
-    ,PVATaxAmount                                                                                                                                                                               --递延税金
-    ,ProcureAmount/(1 + GreaterZeroTaxRate) * GreaterZeroTaxRate                                                                                        as ProcureTaxAmount                     --采购抵扣税金
-    ,OtherDeductionsTaxAmount                                                                                                                                                                   --其他项抵扣税金
-    ,Interest                                                                                                                                                                                   --利息税金
-    ,(SellerGrossSaleAmount/(1 + GreaterZeroTaxRate) * GreaterZeroTaxRate + PVATaxAmount ) - (ProcureAmount/(1 + GreaterZeroTaxRate) * GreaterZeroTaxRate + OtherDeductionsTaxAmount + PVATaxAmount ) + Interest  as FinalTaxAmount               --最终应纳税金
-    ,DomesticB2BNetSaleAmount                                                                                                                                                                   --本地B2B净销售额
-    ,CrossBorderB2BNetSaleAmount                                                                                                                                                                --跨境B2B净销售额
-    ,GreaterZeroTaxRate                                                                                                                                                                         --标准税率
-    ,SellerGrossSaleAmount /(1 + GreaterZeroTaxRate)                                                                                                    as SellerNetSaleAmountTaxRateGreater0   --自缴净销售额(税率大于0和空白)
-    ,SellerNetSaleAmountTaxRate0                                                                                                                                                                --自缴净销售额(税率等于0)
-    ,CreateDate                                                                                                                                                                                 --创建时间
-    ,ModifyDate                                                                                                                                                                                  --修改时间
-    ,DE_SelfGermanyToNotEuropean                                                                                                                                                                --自缴-德国到欧盟外
-    ,DE_SelfGermanyToEuropean                                                                                                                                                                   --自缴-德国到欧盟
-from dbo.Vat_AmazonTaxPaymentCalculation
+     Declare_Serial_Number                                                                                                                                                 --业务流水号
+    ,Declare_Currency                                                                                                                                                      --申报币种
+    ,WithholdSaleAmount                                                                                                                                                    --代扣代缴净销售额
+    ,SellerGrossSaleAmount + (SellerNetSaleAmountTaxRate0 * (1 + GreaterZeroTaxRate))                               as SellerTotalGrossSaleAmount                          --自缴含税总销售额
+    ,SellerNetSaleAmount                                                                                                                                                   --自缴净销售额
+    ,SellerNetSaleAmount + WithholdSaleAmount                                                                       as TotalNetSaleAmount                                  --全部净销售额(自缴净销售额+代扣代缴金额)
+    ,SalePVATaxAmount                                                                                                                                                      --销项税
+    ,iif(GreaterZeroTaxRate<>0,SalePVATaxAmount/GreaterZeroTaxRate,0)                                               as NetSaleAmount                                       --销项不含税金额
+    ,iif(GreaterZeroTaxRate<>0,(ProcureTaxAmount + OtherDeductionsTaxAmount + PVATaxAmount)/GreaterZeroTaxRate,0)   as NetProcureAmount                                    --进项不含税金额
+    ,ProcureTaxAmount + OtherDeductionsTaxAmount + PVATaxAmount                                                     as ProcurePVATaxAmount                                 --进项税
+    ,PVATaxAmount                                                                                                                                                          --递延税金
+    ,ProcureTaxAmount                                                                                                                                                      --采购抵扣税金
+    ,OtherDeductionsTaxAmount                                                                                                                                              --其他项抵扣税金
+    ,Interest                                                                                                                                                              --利息税金
+    ,SalePVATaxAmount - (ProcureTaxAmount + OtherDeductionsTaxAmount + PVATaxAmount ) + Interest                    as FinalTaxAmount                                      --最终应纳税金
+    ,DomesticB2BNetSaleAmount                                                                                                                                              --本地B2B净销售额
+    ,CrossBorderB2BNetSaleAmount                                                                                                                                           --跨境B2B净销售额
+    ,ALLB2BNetSaleAmount                                                                                                                                                   --全部B2B净销售额
+    ,GreaterZeroTaxRate                                                                                                                                                    --标准税率
+    ,SellerNetSaleAmountTaxRateGreater0                                                                                                                                    --自缴净销售额(税率大于0和空白)
+    ,SellerNetSaleAmountTaxRate0                                                                                                                                           --自缴净销售额(税率等于0)
+    ,CreateDate                                                                                                                                                            --创建时间
+    ,ModifyDate                                                                                                                                                            --修改时间
+    ,DE_SelfGermanyToNotEuropean                                                                                                                                           --自缴-德国到欧盟外
+    ,DE_SelfGermanyToEuropean                                                                                                                                              --自缴-德国到欧盟
+    ,EUB2BPurchaseSaleAmount                                                                                                                                               --欧盟B2B采购销售额(如清关递延,不含税金额)
+    ,EUInvoiceSaleAmount                                                                                                                                                   --欧盟服务发票销售额(如卢森堡发票，不含金额，一般指亚马逊开给b端的发票)
+from
+    (
+        select
+             ID                                                                                                                                                            --主键
+            ,Declare_Serial_Number                                                                                                                                         --业务流水号
+            ,Declare_Currency                                                                                                                                              --申报币种
+            ,Platform                                                                                                                                                      --平台
+            ,Country                                                                                                                                                       --国家
+            ,WithholdSaleAmount                                                                                                                                            --代扣代缴净销售额
+            ,SellerGrossSaleAmount                                                                                                                                         --自缴含税销售额(税率大于0和空白)
+            ,SellerNetSaleAmountTaxRate0                                                                                                                                   --自缴净销售额(税率等于0)
+            ,DomesticB2BNetSaleAmount                                                                                                                                      --本地B2B净销售额
+            ,CrossBorderB2BNetSaleAmount                                                                                                                                   --跨境B2B净销售额
+            ,DomesticB2BNetSaleAmount + CrossBorderB2BNetSaleAmount                                                                as ALLB2BNetSaleAmount                  --全部B2B净销售额
+            ,ProcureAmount                                                                                                                                                 --采购金额
+            ,PVATaxAmount                                                                                                                                                  --递延税额
+            ,OtherDeductionsTaxAmount                                                                                                                                      --其它抵扣税额
+            ,GreaterZeroTaxRate                                                                                                                                            --大于0税率
+            ,Interest                                                                                                                                                      --利息
+            ,CreateDate                                                                                                                                                    --创建时间
+            ,ModifyDate                                                                                                                                                    --修改时间
+            ,DE_SelfGermanyToNotEuropean                                                                                                                                   --自缴-德国到欧盟外
+            ,DE_SelfGermanyToEuropean                                                                                                                                      --自缴-德国到欧盟
+            ,EUB2BPurchaseSaleAmount                                                                                                                                       --欧盟B2B采购销售额(如清关递延,不含税金额)
+            ,EUInvoiceSaleAmount                                                                                                                                           --欧盟服务发票销售额(如卢森堡发票，不含金额，一般指亚马逊开给b端的发票)
+            ,SellerGrossSaleAmount /(1 + GreaterZeroTaxRate)                                                                       as SellerNetSaleAmountTaxRateGreater0   --自缴净销售额(税率大于0和空白)
+            ,SellerGrossSaleAmount /(1 + GreaterZeroTaxRate) + SellerNetSaleAmountTaxRate0                                         as SellerNetSaleAmount                  --自缴净销售额(税率大于0和空白+税率等于0)
+            ,(SellerGrossSaleAmount /(1 + GreaterZeroTaxRate) + SellerNetSaleAmountTaxRate0) * GreaterZeroTaxRate + PVATaxAmount   as SalePVATaxAmount                     --销项税
+            ,ProcureAmount/(1 + GreaterZeroTaxRate) * GreaterZeroTaxRate                                                           as ProcureTaxAmount                     --采购抵扣税金
+        from
+            dbo.Vat_AmazonTaxPaymentCalculation
+    ) tmp
 go
 
 EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'vat_税务申报查询', @level0type = N'SCHEMA', @level0name = 'dbo', @level1type = N'VIEW', @level1name = 'VatView_AmazonTaxPaymentCalculation';
@@ -149,6 +183,10 @@ go
 EXEC sp_addextendedproperty @name = N'MS_Description',@value = N'自缴-德国到欧盟外',@level0type = N'Schema', @level0name = 'dbo',@level1type = N'View',  @level1name = 'VatView_AmazonTaxPaymentCalculation',@level2type = N'Column', @level2name = 'DE_SelfGermanyToNotEuropean';
 go
 EXEC sp_addextendedproperty @name = N'MS_Description',@value = N'自缴-德国到欧盟',@level0type = N'Schema', @level0name = 'dbo',@level1type = N'View',  @level1name = 'VatView_AmazonTaxPaymentCalculation',@level2type = N'Column', @level2name = 'DE_SelfGermanyToEuropean';
+go
+EXEC sp_addextendedproperty @name = N'MS_Description',@value = N'欧盟B2B采购销售额(如清关递延,不含税金额)',@level0type = N'Schema', @level0name = 'dbo',@level1type = N'View',  @level1name = 'VatView_AmazonTaxPaymentCalculation',@level2type = N'Column', @level2name = 'EUB2BPurchaseSaleAmount';
+go
+EXEC sp_addextendedproperty @name = N'MS_Description',@value = N'欧盟服务发票销售额(如卢森堡发票，不含金额，一般指亚马逊开给b端的发票)',@level0type = N'Schema', @level0name = 'dbo',@level1type = N'View',  @level1name = 'VatView_AmazonTaxPaymentCalculation',@level2type = N'Column', @level2name = 'EUInvoiceSaleAmount';
 go
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- vat视图_亚马逊销售数据
@@ -257,3 +295,32 @@ where st=1
 go
 EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'vat视图_亚马逊销售数据', @level0type = N'SCHEMA', @level0name = 'dbo', @level1type = N'VIEW', @level1name = 'VatView_AmazonVATSalesData';
 go
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- 添加2024-10-16给计算结果表添加2个字段
+use vat_db
+go
+alter table dbo.Vat_AmazonTaxPaymentCalculation add EUB2BPurchaseSaleAmount decimal(38,8) default 0
+go
+alter table dbo.Vat_AmazonTaxPaymentCalculation add EUInvoiceSaleAmount decimal(38,8) default 0
+go
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'欧盟B2B采购销售额(如清关递延,不含税金额)' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Vat_AmazonTaxPaymentCalculation', @level2type=N'COLUMN',@level2name=N'EUB2BPurchaseSaleAmount'
+GO
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'欧盟服务发票销售额(如卢森堡发票，不含金额，一般指亚马逊开给b端的发票)' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Vat_AmazonTaxPaymentCalculation', @level2type=N'COLUMN',@level2name=N'EUInvoiceSaleAmount'
+GO
+
+alter table dbo.Vat_AmazonTaxPaymentCalculation add TaxAmount decimal(38,8) default 0
+go
+alter table dbo.Vat_AmazonTaxPaymentCalculation add FinalTaxAmount decimal(38,8) default 0
+go
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'税金' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Vat_AmazonTaxPaymentCalculation', @level2type=N'COLUMN',@level2name=N'TaxAmount'
+GO
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'最终缴纳税金(税金+利息)' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Vat_AmazonTaxPaymentCalculation', @level2type=N'COLUMN',@level2name=N'FinalTaxAmount'
+GO
+
+alter table dbo.Vat_AmazonTaxPaymentCalculation add SellerNetSaleAmountTaxRateGreater0 decimal(38,8) default 0
+go
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'自缴净销售额(税率大于0和空白)' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Vat_AmazonTaxPaymentCalculation', @level2type=N'COLUMN',@level2name=N'SellerNetSaleAmountTaxRateGreater0'
+GO
+
+

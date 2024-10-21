@@ -78,6 +78,8 @@ def update_mysql(di,offset,table_name,retry_count):
 # 用于发送消息到企业微信
 def sent_to_wechat(di):
     message = f'''>>>offset值:{di.get("kafka_offset")}\n>>>执行时间:{di.get("exec_time")}\n>>>报错信息：{di.get("exec_step")}'''
+    if di.get("exec_rerun"):
+        message = f'''>>>offset值:{di.get("kafka_offset")}\n>>>重跑时执行成功'''
     url = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=16f73bd3-260b-4091-92f3-d93e37e4fafd"
     payload = json.dumps({"msgtype": "text",
                           "text": {
