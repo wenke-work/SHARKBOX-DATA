@@ -88,22 +88,19 @@ select
     ,tb2.TaxRate0                                                       as SellerNetSaleAmountTaxRate0   --自缴净销售额(税率等于0)
     ,0                                                                  as DomesticB2BNetSaleAmount      -- 本地B2B净销售额
     ,0                                                                  as CrossBorderB2BNetSaleAmount   -- 跨境B2B净销售额
-    ,tb2.ProcureAmount                                                  as ProcureAmount                 --采购金额
+    ,tb2.ProcureAmount                                                  as ProcureAmount                 --混合采购金额 COMMING_BUY
     ,0                                                                  as PVATaxAmount                  --递延税额
     ,0                                                                  as OtherDeductionsTaxAmount      --其它抵扣税额
-    ,tb3.Price_Of_Items_Vat_Rate_Percent                                as GreaterZeroTaxRate            --大于0税率
+    ,tb0.RateValue                                                      as GreaterZeroTaxRate            --大于0税率
     ,0                                                                  as Interest                      -- 利息
 from
-    (select @Declare_Serial_Number as Declare_Serial_Number) tb0
+    (select @Declare_Serial_Number as Declare_Serial_Number,RateValue from dbo.VAT_rate where CountryId in(select ID from dbo.Country where CountryName='英国')) tb0
 left join
     TaxAmountList tb1
 on tb0.Declare_Serial_Number=tb1.Declare_Serial_Number
 left join
     SelfPayment tb2
 on tb0.Declare_Serial_Number = tb2.Declare_Serial_Number
-left join
-    (select Declare_Serial_Number,max(Price_Of_Items_Vat_Rate_Percent) as Price_Of_Items_Vat_Rate_Percent from DataListTmp where Sale_Depart_Country='GB' and Price_Of_Items_Vat_Rate_Percent>0 group by Declare_Serial_Number) tb3
-on tb0.Declare_Serial_Number = tb3.Declare_Serial_Number
 )
 
 merge into dbo.Vat_AmazonTaxPaymentCalculation tb1

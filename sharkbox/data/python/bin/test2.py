@@ -24,8 +24,18 @@
 # print(cpu_memory)
 
 #------------------------------------------------------------------------------------------------------------------------
-from datetime import datetime, timedelta
-now = datetime.now()
-one_day_ago = now - timedelta(days=1)
-str_date=one_day_ago.strftime("%Y-%m-%d")
-print(str_date)
+# from datetime import datetime, timedelta
+# now = datetime.now()
+# one_day_ago = now - timedelta(days=1)
+# str_date=one_day_ago.strftime("%Y-%m-%d")
+# print(str_date)
+
+#------------------------------------------------------------------------------------------------------------------------
+# from pdf2image import convert_from_path
+source_data = "C:\\Users\\Administrator\\Desktop\\files\\temp\\test\\身份证正反面.pdf"
+source_name = source_data[:-4]
+print(source_name)
+
+# images = convert_from_path(source_data)
+# for i, image in enumerate(images):
+#     image.save(f'{source_data}_{i}.jpg', 'JPEG')

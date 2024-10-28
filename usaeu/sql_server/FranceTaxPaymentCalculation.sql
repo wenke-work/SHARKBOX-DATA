@@ -108,10 +108,10 @@ select
     ,tb3.ComminglingBuyProcureAmount1 + tb3.ComminglingBuyProcureAmount2                                           as ProcureAmount                   -- 采购金额
     ,0                                                                                                             as PVATaxAmount                    -- 递延税额
     ,0                                                                                                             as OtherDeductionsTaxAmount        -- 其它抵扣税额
-    ,tb4.Price_Of_Items_Vat_Rate_Percent                                                                           as GreaterZeroTaxRate              -- 大于0税率
+    ,tb0.RateValue                                                                                                 as GreaterZeroTaxRate              -- 大于0税率
     ,0                                                                                                             as Interest                        -- 利息
 from
-    (select @Declare_Serial_Number as Declare_Serial_Number) tb0
+    (select @Declare_Serial_Number as Declare_Serial_Number,RateValue from dbo.VAT_rate where CountryId in(select ID from dbo.Country where CountryName='法国')) tb0
 left join
     WithholdAndRemit tb1
 on tb0.Declare_Serial_Number=tb1.Declare_Serial_Number
@@ -121,9 +121,6 @@ on tb0.Declare_Serial_Number=tb2.Declare_Serial_Number
 left join
     DeductionAmount tb3
 on tb0.Declare_Serial_Number=tb3.Declare_Serial_Number
-left join
-    (select Declare_Serial_Number,max(Price_Of_Items_Vat_Rate_Percent) as Price_Of_Items_Vat_Rate_Percent from DataListTmp where Sale_Depart_Country='FR' and Price_Of_Items_Vat_Rate_Percent>0 group by Declare_Serial_Number) tb4
-on tb0.Declare_Serial_Number=tb4.Declare_Serial_Number
 )
 
 merge into dbo.Vat_AmazonTaxPaymentCalculation tb1
