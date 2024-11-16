@@ -32,10 +32,34 @@
 
 #------------------------------------------------------------------------------------------------------------------------
 # from pdf2image import convert_from_path
-source_data = "C:\\Users\\Administrator\\Desktop\\files\\temp\\test\\身份证正反面.pdf"
-source_name = source_data[:-4]
-print(source_name)
+# source_data = "C:\\Users\\Administrator\\Desktop\\files\\temp\\test\\身份证正反面.pdf"
+# source_name = source_data[:-4]
+# print(source_name)
 
 # images = convert_from_path(source_data)
 # for i, image in enumerate(images):
 #     image.save(f'{source_data}_{i}.jpg', 'JPEG')
+
+#------------------------------------------------------------------------------------------------------------------------
+import time,json,sys
+from datetime import datetime
+time_da='2000-01-01 00:00:00'
+time_tuple = time.strptime(time_da, "%Y-%m-%d %H:%M:%S")
+timestamp = int(time.mktime(time_tuple))
+print(timestamp)
+wu = "wenke"
+email = "hahahah"
+print("qq或微信:"+wu+",邮箱:"+email)
+data = {}
+data[wu]=email
+print(data)
+print(datetime.now())
+
+tu1 = ("dafgadf","adfadsf")
+tu2 = ("dafgadf","adfadsf")
+tu3 = ("dafgad3","adfadsf")
+li = []
+li.append(tu1)
+li.append(tu2)
+li.append(tu3)
+print(set(li))

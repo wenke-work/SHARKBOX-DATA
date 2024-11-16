@@ -54,7 +54,7 @@ def re_execute(kafka_offset,kafka_value,exec_api_program,table_name,retry_count)
 if __name__ == "__main__":
     while True:
         # 定义一个进程池, 最大进程数4
-        p = multiprocessing.Pool(2)
+        p = multiprocessing.Pool(1)
         # 需要读取的Kafka执行记录表
         table_list = ['kafka_center_to_wms','kafka_center_to_oms','kafka_oms_to_wms']
         # 获取数据库链接
